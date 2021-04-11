@@ -8,7 +8,7 @@
 // Time
 RTC_TimeTypeDef RTCtime;
 char timeStrbuff[64];
-String h, m, tmp;
+String h, m, s, tmp;
 int lastSecond;
 
 // Visual
@@ -48,7 +48,7 @@ void loop()
   M5.Rtc.GetTime(&RTCtime);
   M5.IMU.getAccelData(&accX,&accY,&accZ);
 
-  // Serial data detected. Check if it is "t" or "T", if it is update RTC time from console.
+  // Serial data detected. Check if it is "t" or "T", if it is, then call the UpdateTime() function.
   if (Serial.available() > 0)
   {
     tmp = Serial.readString();
@@ -148,22 +148,28 @@ void loop()
 }
 
 // Function used to set time reading from console or serial monitor. 
-// First hours in (24 hours format) then minutes.
+// First hours in (24 hours format), then minutes, and then the seconds.
 void UpdateTime() {
-  while (Serial.available() > 0){ Serial.read(); }
   Serial.println("Send the current hour (24 Hours format): ");
+  Serial.flush();
+  while (Serial.available() > 0){ Serial.read(); }
   while (Serial.available() == 0){}
   h = Serial.parseInt();
   RTCtime.Hours = h.toInt();
+  Serial.println("Send the minutes: ");
+  Serial.flush();
   while (Serial.available() > 0){ Serial.read(); }
-  Serial.print("Send the minutes: ");
   while (Serial.available() == 0){}
-  m = Serial.parseInt();   
+  m = Serial.parseInt();
   RTCtime.Minutes = m.toInt();
-  RTCtime.Seconds = 0;
+  Serial.println("Send the seconds: ");
+  Serial.flush();
+  while (Serial.available() > 0){ Serial.read(); }
+  while (Serial.available() == 0){}
+  s = Serial.parseInt();  
+  RTCtime.Seconds = s.toInt();
   M5.Rtc.SetTime(&RTCtime);
   Serial.println();
-  while (Serial.available() > 0){ Serial.read(); }
   Serial.println("Press \"t\" to adjust the time.");
 }
 
@@ -182,6 +188,7 @@ void UpdateDark(){
 // Function to draw clocks circle and lines. Only called onces when switching from digital to analog.
 void DrawClock()
 {
+  M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
   M5.Lcd.fillScreen(TFT_BLACK);
   M5.Lcd.fillCircle(centerX, centerY, 118, TFT_GREEN);
   M5.Lcd.fillCircle(centerX, centerY, 110, TFT_BLACK);
@@ -206,8 +213,8 @@ void DrawClock()
     M5.Lcd.drawPixel(x0, yy0, TFT_WHITE);
     
     // Draw main quadrant dots
-    if(i==0 || i==180) M5.Lcd.fillCircle(x0, yy0, 2, TFT_WHITE);
-    if(i==90 || i==270) M5.Lcd.fillCircle(x0, yy0, 2, TFT_WHITE);
+    if(i==0 ) M5.Lcd.drawString("12", x0 - 5, yy0, 1);
+    if(i==90 || i==180 || i==270) M5.Lcd.fillCircle(x0, yy0, 2, TFT_WHITE);
   }
   M5.Lcd.fillCircle(centerX, centerY, 3, TFT_WHITE);
 }
