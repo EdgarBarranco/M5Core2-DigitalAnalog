@@ -8,7 +8,7 @@
 // Time
 RTC_TimeTypeDef RTCtime;
 char timeStrbuff[64];
-String h, m;
+String h, m, tmp;
 int lastSecond;
 
 // Visual
@@ -36,7 +36,7 @@ void setup()
   M5.Lcd.fillScreen(TFT_BLACK);
 
   // If time is wrong, can be set from the serial consol at any time.
-  Serial.println("Send the current hour (24 Hours format): ");
+  Serial.println("Press \"t\" to adjust the time.");
 }
 
 void loop()
@@ -48,10 +48,11 @@ void loop()
   M5.Rtc.GetTime(&RTCtime);
   M5.IMU.getAccelData(&accX,&accY,&accZ);
 
-  // Serial data detected. Updating RTC time from console.
+  // Serial data detected. Check if it is "t" or "T", if it is update RTC time from console.
   if (Serial.available() > 0)
   {
-    UpdateTime();
+    tmp = Serial.readString();
+    if ( tmp == "t\r\n" || tmp == "T\r\n") UpdateTime();
   }
 
   // Button A was pressed. Decreasing brightness.
@@ -149,10 +150,13 @@ void loop()
 // Function used to set time reading from console or serial monitor. 
 // First hours in (24 hours format) then minutes.
 void UpdateTime() {
+  while (Serial.available() > 0){ Serial.read(); }
+  Serial.println("Send the current hour (24 Hours format): ");
+  while (Serial.available() == 0){}
   h = Serial.parseInt();
   RTCtime.Hours = h.toInt();
-  Serial.print("Send the minutes: ");
   while (Serial.available() > 0){ Serial.read(); }
+  Serial.print("Send the minutes: ");
   while (Serial.available() == 0){}
   m = Serial.parseInt();   
   RTCtime.Minutes = m.toInt();
@@ -160,7 +164,7 @@ void UpdateTime() {
   M5.Rtc.SetTime(&RTCtime);
   Serial.println();
   while (Serial.available() > 0){ Serial.read(); }
-  Serial.println("Send the current hour (24 Hours format): ");
+  Serial.println("Press \"t\" to adjust the time.");
 }
 
 // Function used to switch between dark and light mode used when in digital mode and when coming out of analog mode.
